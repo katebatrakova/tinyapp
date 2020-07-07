@@ -19,18 +19,6 @@ const urlDatabase = {
   '9sm5xK': "http://www.google.com"
 };
 
-
-
-//GET a specific id :shortURL
-// app.get("/u/:shortURL", (req, res) => {
-//   // const longURL = urlDatabase[req.params.shortURL];
-//   // const shortURL = req.params.shortURL;
-//   // res.redirect(urlDatabase[shortURL]);
-//   console.log(req.params); //doesn't work
-//   res.render('urls_show');
-// });
-
-
 app.get("/urls", (req, res) => {
   let templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
@@ -51,6 +39,13 @@ app.post("/urls", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
+});
+
+//redirect to LongURL
+app.get("/u/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL;
+  res.redirect(urlDatabase[shortURL]);
+  (console.log('redirecting to....', urlDatabase[shortURL]))
 });
 
 ////add  endpoint
