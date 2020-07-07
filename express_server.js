@@ -29,7 +29,6 @@ app.get("/urls/new", (req, res) => {
 });
 
 // POST request to add urls, save and redirect
-// POST request to add urls, save and redirect
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;//save key-value to database
@@ -43,7 +42,6 @@ app.get("/u/:shortURL", (req, res) => {
   console.log('redirecting to....', urlDatabase[shortURL]);
 });
 
-
 // DELETE  
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
@@ -51,10 +49,28 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect('/urls');
 });
 
+
+//Page http://localhost:8080/urls/9sm5xK
 app.get("/urls/:shortURL", (req, res) => {
   let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
 });
+
+// EDIT in ShortURL
+app.post("/urls/:shortURL/", (req, res) => {
+  const shortURL = req.params.shortURL;
+  const updatedURL = req.body.longURL;
+  urlDatabase[shortURL] = updatedURL;
+  console.log(urlDatabase); //updated urlDatabase
+  res.redirect('/urls');
+});
+
+//EDIT redirect
+app.get("/urls/:shortURL", (req, res) => {
+  console.log('edit buton redirect clicked');
+  res.render("urls_show");
+});
+
 
 app.listen(PORT, () => {
   console.log(`TinyAPP listening on port ${PORT}!`);
