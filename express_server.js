@@ -41,35 +41,22 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-//redirect to LongURL
+//redirect to LongURL 
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   res.redirect(urlDatabase[shortURL]);
-  (console.log('redirecting to....', urlDatabase[shortURL]))
+  console.log('redirecting to....', urlDatabase[shortURL]);
 });
 
-////add  endpoint
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
-//add additional endpoints
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-//response can contain HTML code rendered in the client browser
-
-
-
-
-
-
-
-
-
-
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+  console.log(`TinyAPP listening on port ${PORT}!`);
 });
 
