@@ -5,7 +5,7 @@ const PORT = 8080;
 //Set ejs as the view engine
 app.set("view engine", "ejs")
 
-//body-parser library converts the request body from a Buffer into string
+//body-parser library converts the request body from a POST request Buffer into string
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
 
