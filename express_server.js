@@ -13,7 +13,6 @@ function generateRandomString() {
   return Math.random().toString(36).substr(6);
 }
 
-
 const urlDatabase = {
   'b2xVn2': "http://www.lighthouselabs.ca",
   '9sm5xK': "http://www.google.com"
@@ -30,15 +29,11 @@ app.get("/urls/new", (req, res) => {
 });
 
 // POST request to add urls, save and redirect
+// POST request to add urls, save and redirect
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;//save key-value to database
   res.redirect(`urls/${shortURL}`)
-});
-
-app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
-  res.render("urls_show", templateVars);
 });
 
 //redirect to LongURL 
@@ -48,12 +43,17 @@ app.get("/u/:shortURL", (req, res) => {
   console.log('redirecting to....', urlDatabase[shortURL]);
 });
 
-app.get("/", (req, res) => {
-  res.send("Hello!");
+
+// DELETE  
+app.post("/urls/:shortURL/delete", (req, res) => {
+  const shortURL = req.params.shortURL;
+  delete urlDatabase[shortURL];
+  res.redirect('/urls');
 });
 
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
+app.get("/urls/:shortURL", (req, res) => {
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  res.render("urls_show", templateVars);
 });
 
 app.listen(PORT, () => {
