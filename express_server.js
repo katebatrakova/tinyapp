@@ -1,14 +1,13 @@
 const express = require("express");
 const app = express();
 const PORT = 8080;
-//body-parser library converts the request body from a Buffer into string
-const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({ extended: true }));
-
 
 //Set ejs as the view engine
 app.set("view engine", "ejs")
 
+//body-parser library converts the request body from a Buffer into string
+const bodyParser = require("body-parser");
+app.use(bodyParser.urlencoded({ extended: true }));
 
 function generateRandomString() {
   return Math.random().toString(36).substr(6);
@@ -22,18 +21,37 @@ const urlDatabase = {
 
 
 
-//handling the POST request
-app.post("/urls", (req, res) => {
-  // console.log(req.body);  // Log the POST request body to the console
-  const generatedShortURL = generateRandomString();
-  res.statusCode = 200;
-  urlDatabase[generatedShortURL] = req.body.longURL;
-  console.log(urlDatabase);
+//GET a specific id :shortURL
+// app.get("/u/:shortURL", (req, res) => {
+//   // const longURL = urlDatabase[req.params.shortURL];
+//   // const shortURL = req.params.shortURL;
+//   // res.redirect(urlDatabase[shortURL]);
+//   console.log(req.params); //doesn't work
+//   res.render('urls_show');
+// });
+
+
+app.get("/urls", (req, res) => {
+  let templateVars = { urls: urlDatabase };
+  res.render("urls_index", templateVars);
 });
 
-app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
+//submit via the form
+app.get("/urls/new", (req, res) => {
+  res.render("urls_new");
+});
+
+// POST request to add urls, save and redirect
+app.post("/urls", (req, res) => {
+  // console.log(req.body); // Log the POST request body to the console
+  const shortURL = generateRandomString();
+  urlDatabase[shortURL] = req.body.longURL;//save key-value to database
+  res.redirect('/urls')
+});
+
+app.get("/urls/:shortURL", (req, res) => {
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  res.render("urls_show", templateVars);
 });
 
 ////add  endpoint
@@ -47,33 +65,12 @@ app.get("/urls.json", (req, res) => {
 });
 
 //response can contain HTML code rendered in the client browser
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
-app.get("/set", (req, res) => {
-  const a = 1;
-  res.send(`a = ${a}`);
-});
-
-app.get("/fetch", (req, res) => {
-  res.send(`a = ${a}`);
-});
-//a new route handler for "/urls". Using res.render() to pass the URL data to our template
-app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase };
-  res.render("urls_index", templateVars);
-});
-
-app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
-});
 
 
-app.get("/urls:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
-  res.render("urls_show", templateVars);
-});
+
+
+
+
 
 
 
