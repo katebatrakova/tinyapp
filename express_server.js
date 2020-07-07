@@ -16,7 +16,7 @@ function generateRandomString() {
 
 
 const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
+  'b2xVn2': "http://www.lighthouselabs.ca",
   '9sm5xK': "http://www.google.com"
 };
 
@@ -24,8 +24,16 @@ const urlDatabase = {
 
 //handling the POST request
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  // console.log(req.body);  // Log the POST request body to the console
+  const generatedShortURL = generateRandomString();
+  res.statusCode = 200;
+  urlDatabase[generatedShortURL] = req.body.longURL;
+  console.log(urlDatabase);
+});
+
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
 });
 
 ////add  endpoint
