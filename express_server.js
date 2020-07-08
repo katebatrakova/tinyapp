@@ -10,9 +10,33 @@ app.set("view engine", "ejs")
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser())
-
+//--------------------------------------------HELPER FUNCTIONS
 function generateRandomString() {
   return Math.random().toString(36).substr(6);
+};
+
+const findUserByEmail = email => {
+  //loop through the users
+  for (let keyUserId in users) {
+    //if user match retrieve the user
+    if (users[keyUserId].email === email) {
+      return users[keyUserId];
+    }
+  }
+  return false;
+}
+
+const addNewUSer = (userId, email, password) => {
+  //create a new user object which is the value associated with the ID
+  const newUser = {
+    id: userId,
+    email,
+    password
+  }
+  //add new user object to usersDB
+  users[userId] = newUser;
+  //return userID
+  return userId;
 }
 
 
@@ -33,6 +57,16 @@ const users = {
     id: "qwerty",
     email: "dva@example.com",
     password: "second"
+  },
+  "kate": {
+    id: "kate",
+    email: "katerynabatrakova@gmail.com",
+    password: "rty"
+  },
+  "mike": {
+    id: "mike",
+    email: "mykhailobatrakov@gmail.com",
+    password: "ytr"
   }
 }
 //----------------------------------MAIN PAGE
@@ -89,21 +123,21 @@ app.get("/urls/:shortURL", (req, res) => {
 
 
 //----------------------------------LOGIN and set a COOCKIE named username
-app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie('username', username);// set the cookie's key and value
-  // console.log(req.cookies, ' cookies'); 
-  res.redirect('/urls');
-  console.log('Login happenes')
-})
+// app.post("/login", (req, res) => {
+//   const username = req.body.username;
+//   res.cookie('username', username);// set the cookie's key and value
+//   // console.log(req.cookies, ' cookies'); 
+//   res.redirect('/urls');
+//   console.log('Login happenes')
+// })
 
-//----------------------------------LOGOUT and delete cookie named username
-app.post("/logout", (req, res) => {
-  res.clearCookie('username')
-  // console.log(req.cookies, ' cookies');
-  res.redirect('/urls');
-  console.log('Logout happenes')
-})
+// //----------------------------------LOGOUT and delete cookie named username
+// app.post("/logout", (req, res) => {
+//   res.clearCookie('username')
+//   // console.log(req.cookies, ' cookies');
+//   res.redirect('/urls');
+//   console.log('Logout happenes')
+// })
 
 //----------------------------------SUBMIT NEW via the form
 app.get("/urls/new", (req, res) => {
@@ -121,36 +155,7 @@ app.get('/register', (req, res) => {
   res.render('register');
 })
 
-// //----------------------------------function for REGISTER find if user exists 
-
-const findUserByEmail = email => {
-  //loop through the users
-  for (let keyUserId in users) {
-    //if user match retrieve the user
-    if (users[keyUserId].email === email) {
-      return users[keyUserId];
-    }
-  }
-  return false;
-}
-
-// //----------------------------------function for REGISTER 
-
-const addNewUSer = (userId, email, password) => {
-
-  //create a new user object which is the value associated with the ID
-  const newUser = {
-    id: userId,
-    email,
-    password
-  }
-  //add new user object to usersDB
-  users[userId] = newUser;
-  //return userID
-  return userId;
-}
-
-// //----------------------------------catch the submit btn of the REGISTER form, set COOCKIE
+// ----------------------------------catch the submit btn of the REGISTER form, set COOCKIE
 app.post('/register', (req, res) => {
   //extract user info from the form
   const userId = generateRandomString();
@@ -167,14 +172,15 @@ app.post('/register', (req, res) => {
     res.redirect('/urls');
   }
   else {
-    res.status(401).send("Sorry, you email already exists in our recors. Please, log in.");
+    res.status(400).send("Sorry, you email already exists in our recors. Please, log in.");
   }
+  console.log(users, 'updates users object database');
 })
 
-// //display LOGIN form
-// app.length('/login', (req, res) => {
-//   res.render('/login');
-// });
+// -----------Display LOGIN PAGE
+app.get('/login', (req, res) => {
+  res.render('login');
+});
 
 // //LOGIN the user 
 
