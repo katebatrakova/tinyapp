@@ -39,6 +39,16 @@ const addNewUSer = (userId, email, password) => {
   return userId;
 }
 
+const authenticateUser = (email, password) => {
+  //does the user with that email exist
+  const user = findUserByEmail(email);
+  //check the email and password match
+  if (user && user.password === password && user.email === email) {
+    return user.id;
+  } else {
+    return false;
+  }
+}
 
 // ----------------------------------DATABBASE OF URLs
 const urlDatabase = {
@@ -121,24 +131,6 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-
-//----------------------------------LOGIN and set a COOCKIE named username
-// app.post("/login", (req, res) => {
-//   const username = req.body.username;
-//   res.cookie('username', username);// set the cookie's key and value
-//   // console.log(req.cookies, ' cookies'); 
-//   res.redirect('/urls');
-//   console.log('Login happenes')
-// })
-
-// //----------------------------------LOGOUT and delete cookie named username
-// app.post("/logout", (req, res) => {
-//   res.clearCookie('username')
-//   // console.log(req.cookies, ' cookies');
-//   res.redirect('/urls');
-//   console.log('Logout happenes')
-// })
-
 //----------------------------------SUBMIT NEW via the form
 app.get("/urls/new", (req, res) => {
   const user_id = req.cookies['user_id'];
@@ -177,40 +169,40 @@ app.post('/register', (req, res) => {
   console.log(users, 'updates users object database');
 })
 
-// -----------Display LOGIN PAGE
+// -----------------------Display LOGIN PAGE
 app.get('/login', (req, res) => {
   res.render('login');
 });
 
-// //LOGIN the user 
+// ------------------------- LOGIN the user 
 
-// app.post('/login', (req, res) => {
+app.post('/login', (req, res) => {
+  //extract the user info from the request body
+  const email = req.body.email;
+  const password = req.body.password;
+  //authenticate user
+  const userId = authenticateUser(email, password);
+  if (userId) {
+    //   // set the user ID in the coockie
+    res.cookie('user_id', userId);
+    console.log(userId, ' ------ user ID');
+    console.log(req.cookies['user_id'], ' -------user id in cookie');
+    res.redirect('/urls');
+  } else {
+    res.status(401).send('Wrong credentials')
+  }
+})
 
-//   //extract the user info from the request body
-//   const username = req.body.username;
-//   const password = req.body.password;
-//   //authenticate user
-//   const userId = authenticateUser(email, password);
-//   if (userId) {
-//     // set the user ID in the coockie
-//     res.cookie('user_id', userId);
-//     res.redirect('/urls');
-//   } else {
-//     res.status(401).send('Wrong credentials')
-//   }
 
-// })
-// // function authenticate for LOGIN
-// const authenticateUser = (email, password) => {
-//   //does the user with that email exist
-//   const user = findtUSerByEmail(email);
-//   //chek the email and password match
-//   if (user && user.password === password) {
-//     return user.id;
-//   } else {
-//     return false;
-//   }
-// }
+//---------------------------------LOGOUT and delete cookie named username
+app.post("/logout", (req, res) => {
+  res.clearCookie('user_id')
+  res.redirect('/urls');
+  console.log('Logout happenes')
+  console.log(req.cookies['user_id'], ' -------user id in cookie');
+})
+
+
 
 // after login creation add to /urls hereto template VARS user: users[req.cookies['user_id']]; res.render('/register', templateVArs)
 //then change the _header . 
