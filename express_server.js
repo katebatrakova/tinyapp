@@ -77,21 +77,21 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 
-//LOGIN and set a cookie named username
+//LOGIN and set a COOCKIE named username
 app.post("/login", (req, res) => {
   const username = req.body.username;
-  res.cookie('username', username);
-  console.log(req.cookies, ' cookies');
+  res.cookie('username', username);// set the cookie's key and value
+  // console.log(req.cookies, ' cookies'); 
   res.redirect('/urls');
+  console.log('Login happenes')
 })
 
 //LOGOUT and delete cookie named username
 app.post("/logout", (req, res) => {
-  const username = req.body.username;
-  res.cookie('username', username);
   res.clearCookie('username')
-  console.log(req.cookies, ' cookies');
+  // console.log(req.cookies, ' cookies');
   res.redirect('/urls');
+  console.log('Logout happenes')
 })
 
 
