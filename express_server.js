@@ -21,7 +21,21 @@ const urlDatabase = {
   'b2xVn2': "http://www.lighthouselabs.ca",
   '9sm5xK': "http://www.google.com"
 };
+// ----------------------------------DATABBASE OF USERS
 
+const users = {
+  "asdf": {
+    id: "asdf",
+    email: "odin@example.com",
+    password: "first"
+  },
+  "qwerty": {
+    id: "qwerty",
+    email: "dva@example.com",
+    password: "second"
+  }
+}
+//----------------------------------MAIN PAGE
 app.get("/urls", (req, res) => {
   let templateVars = { username: req.cookies["username"], urls: urlDatabase };
   res.render("urls_index", templateVars);
@@ -106,57 +120,53 @@ app.get('/register', (req, res) => {
 
 // //----------------------------------function for REGISTER find if user exists 
 
-// const findUserByEmail = email => {
-//   //loop through the users
-//   for (let keyUserId in usersObject) {
-//     //if user match retrieve the user
-//     if (usersObject[keyUserId].email === email) {
-//       return usersObject[keyUserId];
-//     }
-//   } else {
-//     return false;
-//   }
-// }
+const findUserByEmail = email => {
+  //loop through the users
+  for (let keyUserId in users) {
+    //if user match retrieve the user
+    if (users[keyUserId].email === email) {
+      return users[keyUserId];
+    }
+  }
+  return false;
+}
 
 // //----------------------------------function for REGISTER 
 
-// const addNewUSer = (name, email, password) => {
-//   //generare an ID
-//   const userID = Math.random().toString(36).substring(6);
-//   //create a new user object which is the value associated with the ID
-//   const newUser = {
-//     id: userID,
-//     name,
-//     email,
-//     password
-//   }
-//   //add new user object to usersDB
-//   objectName[userID] = newUser;
-//   //return userID
-//   return userID;
-// }
+const addNewUSer = (userId, email, password) => {
+
+  //create a new user object which is the value associated with the ID
+  const newUser = {
+    id: userId,
+    email,
+    password
+  }
+  //add new user object to usersDB
+  users[userId] = newUser;
+  //return userID
+  return userId;
+}
 
 // //----------------------------------catch the submit btn of the REGISTER form, set COOCKIE
 app.post('/register', (req, res) => {
   //extract user info from the form
+  const userId = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+  // Check if user already exist via function 
+  const userExists = (findUserByEmail(email));
 
-  //Check if user already exist via function 
-  // const user = findUserByEmail(email);
-
-  // if (!user) {
-  //   //add user to the users DB function
-  //   const userID = addNewUSer(name, email, password);
-  //   //set the user id in the coockie 
-  //   res.coockie('user_id', userID);
-  //   //redirect to urls/
-
-  //   res.redirect('/urls');
-  // } else {
-  //   res.status(401).send("Error: email already exists");
-  // }
-
+  if (!userExists) {
+    //add user to the users DB function
+    const userID = addNewUSer(userId, email, password);
+    //set the user id in the coockie 
+    res.cookie('user_id', userID);
+    //redirect to urls/
+    res.redirect('/urls');
+  } else {
+    res.status(401).send("Error: email already exists");
+  }
+  console.log(users)//test the new user is appended to users database
 })
 
 // //display LOGIN form
