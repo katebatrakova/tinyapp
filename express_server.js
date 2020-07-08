@@ -85,14 +85,14 @@ const users = {
   }
 }
 //function  FIX THIS with the update object!!
-// const checkURLinDatabase = ((longURL) => {
-//   for (let id in urlDatabase) {
-//     if (urlDatabase[id] === longURL) {
-//       return true;
-//     };
-//   }
-//   return false;
-// })
+const checkURLinDatabase = ((longURL) => {
+  for (let id in urlDatabase) {
+    if (urlDatabase[id].longURL === longURL) {
+      return true;
+    };
+  }
+  return false;
+})
 //----------------------------------MAIN PAGE
 app.get("/urls", (req, res) => {
   const user_id = req.cookies['user_id'];
@@ -116,14 +116,15 @@ app.get("/urls/new", (req, res) => {
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
-  const urlExists = checkURLinDatabase(longURL); //function that checks if email already in database
+  const urlExists = checkURLinDatabase(longURL);  //function that checks if email already in database
   if (!urlExists) {
-    urlDatabase[shortURL] = longURL;//save key-value to database
+    console.log(shortURL, 'short URL generated')
+    urlDatabase[shortURL] = { longURL: longURL };//save key-value to database
     res.redirect(`/urls/${shortURL}`)
   } else {
     res.status(404).send("Sorry, the email you are trying to submit to submit exists");
   }
-
+  console.log(urlDatabase, 'updated database url')
 });
 
 //----------------------------------Page http://localhost:8080/urls/:shortURL
@@ -136,8 +137,8 @@ app.get("/urls/:shortURL", (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   if (urlDatabase[shortURL] !== undefined) {
-    res.redirect(urlDatabase[shortURL]);
-    console.log('redirecting to....', urlDatabase[shortURL]);
+    res.redirect(urlDatabase[shortURL].longURL);
+    console.log('redirecting to....', urlDatabase[shortURL].longURL);
   } else {
     res.status(404).send("Sorry, the website is not found");
   }
