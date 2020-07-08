@@ -37,7 +37,8 @@ const users = {
 }
 //----------------------------------MAIN PAGE
 app.get("/urls", (req, res) => {
-  let templateVars = { username: req.cookies["username"], urls: urlDatabase };
+  const user_id = req.cookies['user_id'];
+  let templateVars = { user_id: users[user_id], urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
@@ -81,7 +82,8 @@ app.post("/urls/:shortURL/", (req, res) => {
 
 //----------------------------------Page http://localhost:8080/urls/:shortURL
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { username: req.cookies["username"], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  const user_id = req.cookies['user_id'];
+  let templateVars = { user_id: users[user_id], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
 });
 
@@ -105,8 +107,9 @@ app.post("/logout", (req, res) => {
 
 //----------------------------------SUBMIT NEW via the form
 app.get("/urls/new", (req, res) => {
-
-  res.render("urls_new");
+  const user_id = req.cookies['user_id'];
+  let templateVars = { user_id: users[user_id] }
+  res.render("urls_new", templateVars);
 });
 
 
@@ -154,19 +157,22 @@ app.post('/register', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   // Check if user already exist via function 
-  const userExists = (findUserByEmail(email));
+  const userExists = findUserByEmail(email);
 
   if (!userExists) {
     //add user to the users DB function
     const userID = addNewUSer(userId, email, password);
     //set the user id in the coockie 
     res.cookie('user_id', userID);
-    //redirect to urls/
+
+    console.log(userID, 'this is a userID')
     res.redirect('/urls');
-  } else {
-    res.status(401).send("Error: email already exists");
   }
-  console.log(users)//test the new user is appended to users database
+  // else {
+  //   res.status(401).send("Error: email already exists");
+  // }
+  // console.log(req.cookies['user_id'], 'cookies') //test the new user is appended to users database
+  // console.log(users, 'users object') //test the new user is appended to users database
 })
 
 // //display LOGIN form
