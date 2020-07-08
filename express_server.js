@@ -158,21 +158,17 @@ app.post('/register', (req, res) => {
   const password = req.body.password;
   // Check if user already exist via function 
   const userExists = findUserByEmail(email);
-
   if (!userExists) {
     //add user to the users DB function
     const userID = addNewUSer(userId, email, password);
     //set the user id in the coockie 
     res.cookie('user_id', userID);
-
     console.log(userID, 'this is a userID')
     res.redirect('/urls');
   }
-  // else {
-  //   res.status(401).send("Error: email already exists");
-  // }
-  // console.log(req.cookies['user_id'], 'cookies') //test the new user is appended to users database
-  // console.log(users, 'users object') //test the new user is appended to users database
+  else {
+    res.status(401).send("Sorry, you email already exists in our recors. Please, log in.");
+  }
 })
 
 // //display LOGIN form
