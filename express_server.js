@@ -129,7 +129,7 @@ app.post("/urls", (req, res) => {
 //----------------------------------Page http://localhost:8080/urls/:shortURL
 app.get("/urls/:shortURL", (req, res) => {
   const user_id = req.cookies['user_id'];
-  let templateVars = { user_id: users[user_id], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  let templateVars = { user_id: users[user_id], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
   res.render("urls_show", templateVars);
 });
 // //----------------------------------redirect to LongURL 
