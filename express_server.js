@@ -50,11 +50,23 @@ const authenticateUser = (email, password) => {
   }
 }
 
+
+
 // ----------------------------------DATABBASE OF URLs
 const urlDatabase = {
   'b2xVn2': "http://www.lighthouselabs.ca",
   '9sm5xK': "http://www.google.com"
 };
+
+const checkURLinDatabase = ((longURL) => {
+  for (let id in urlDatabase) {
+    if (urlDatabase[id] === longURL) {
+      return true;
+    };
+  }
+  return false;
+})
+
 // ----------------------------------DATABBASE OF USERS
 
 const users = {
@@ -86,19 +98,45 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+
+//----------------------------------Display NEW PAGE
+app.get("/urls/new", (req, res) => {
+  const user_id = req.cookies['user_id'];
+  let templateVars = { user_id: users[user_id] }
+  res.render("urls_new", templateVars);
+  console.log('displaying NEW page')
+});
+
 //----------------------------------POST request to add urls, save and redirect
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;//save key-value to database
-  res.redirect(`urls/${shortURL}`)
+  const longURL = req.body.longURL;
+  const urlExists = checkURLinDatabase(longURL); //function that checks if email already in database
+  if (!urlExists) {
+    urlDatabase[shortURL] = longURL;//save key-value to database
+    res.redirect(`/urls/${shortURL}`)
+  } else {
+    res.status(404).send("Sorry, the email you are trying to submit to submit exists");
+  }
+
 });
 
-
-//----------------------------------redirect to LongURL 
+//----------------------------------Page http://localhost:8080/urls/:shortURL
+app.get("/urls/:shortURL", (req, res) => {
+  const user_id = req.cookies['user_id'];
+  let templateVars = { user_id: users[user_id], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  res.render("urls_show", templateVars);
+});
+// //----------------------------------redirect to LongURL 
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  res.redirect(urlDatabase[shortURL]);
-  console.log('redirecting to....', urlDatabase[shortURL]);
+  if (urlDatabase[shortURL] !== undefined) {
+    res.redirect(urlDatabase[shortURL]);
+    console.log('redirecting to....', urlDatabase[shortURL]);
+  } else {
+    res.status(404).send("Sorry, the website is not found");
+  }
+
 });
 
 // ----------------------------------DELETE  
@@ -121,22 +159,13 @@ app.post("/urls/:shortURL/", (req, res) => {
 // app.get("/urls/:shortURL", (req, res) => {
 //   const shortURL = req.params.shortURL;
 //   console.log(shortURL);
-//   res.redirect(`/urls/${shortURL}`);
+//   res.redirect(`/ urls / ${ shortURL }`);
 // });
 
-//----------------------------------Page http://localhost:8080/urls/:shortURL
-app.get("/urls/:shortURL", (req, res) => {
-  const user_id = req.cookies['user_id'];
-  let templateVars = { user_id: users[user_id], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
-  res.render("urls_show", templateVars);
-});
 
-//----------------------------------SUBMIT NEW via the form
-app.get("/urls/new", (req, res) => {
-  const user_id = req.cookies['user_id'];
-  let templateVars = { user_id: users[user_id] }
-  res.render("urls_new", templateVars);
-});
+
+
+
 
 
 //----------------------------------display REGISTER page to the user
@@ -193,7 +222,6 @@ app.post('/login', (req, res) => {
     res.status(403).send("Your email or password doesn't match our records")
   }
 })
-
 
 //---------------------------------LOGOUT and delete cookie
 app.post("/logout", (req, res) => {
