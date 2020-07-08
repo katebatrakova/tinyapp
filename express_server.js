@@ -139,12 +139,11 @@ app.get("/urls/new", (req, res) => {
 });
 
 
-
-// LECTURE
-
 //----------------------------------display REGISTER page to the user
 app.get('/register', (req, res) => {
-  res.render('register');
+  const user_id = req.cookies['user_id'];
+  let templateVars = { user_id: users[user_id] }
+  res.render('register', templateVars);
 })
 
 // ----------------------------------catch the submit btn of the REGISTER form, set COOCKIE
@@ -171,7 +170,9 @@ app.post('/register', (req, res) => {
 
 // -----------------------Display LOGIN PAGE
 app.get('/login', (req, res) => {
-  res.render('login');
+  const user_id = req.cookies['user_id'];
+  let templateVars = { user_id: users[user_id] }
+  res.render('login', templateVars);
 });
 
 // ------------------------- LOGIN the user 
@@ -189,12 +190,12 @@ app.post('/login', (req, res) => {
     console.log(req.cookies['user_id'], ' -------user id in cookie');
     res.redirect('/urls');
   } else {
-    res.status(401).send('Wrong credentials')
+    res.status(403).send("Your email or password doesn't match our records")
   }
 })
 
 
-//---------------------------------LOGOUT and delete cookie named username
+//---------------------------------LOGOUT and delete cookie
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id')
   res.redirect('/urls');
