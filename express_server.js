@@ -54,18 +54,14 @@ const authenticateUser = (email, password) => {
 
 // ----------------------------------DATABBASE OF URLs
 const urlDatabase = {
+  // 'b2xVn2': { longURL: "http://www.lighthouselabs.ca", userID: 'kate' },
+  // '9sm5xK': { longURL: "http://www.google.com", userID: 'mike' }
   'b2xVn2': "http://www.lighthouselabs.ca",
   '9sm5xK': "http://www.google.com"
+
 };
 
-const checkURLinDatabase = ((longURL) => {
-  for (let id in urlDatabase) {
-    if (urlDatabase[id] === longURL) {
-      return true;
-    };
-  }
-  return false;
-})
+
 
 // ----------------------------------DATABBASE OF USERS
 
@@ -91,6 +87,15 @@ const users = {
     password: "ytr"
   }
 }
+//function  FIX THIS with the update object!!
+// const checkURLinDatabase = ((longURL) => {
+//   for (let id in urlDatabase) {
+//     if (urlDatabase[id] === longURL) {
+//       return true;
+//     };
+//   }
+//   return false;
+// })
 //----------------------------------MAIN PAGE
 app.get("/urls", (req, res) => {
   const user_id = req.cookies['user_id'];
