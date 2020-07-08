@@ -103,8 +103,11 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const user_id = req.cookies['user_id'];
   let templateVars = { user_id: users[user_id] }
-  res.render("urls_new", templateVars);
-  console.log('displaying NEW page')
+  if (user_id !== undefined) {
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect('/login')
+  }
 });
 
 //----------------------------------POST request to add urls, save and redirect
@@ -153,20 +156,6 @@ app.post("/urls/:shortURL/", (req, res) => {
   urlDatabase[shortURL] = updatedURL;
   res.redirect('/urls');
 });
-
-
-//----------------------------------EDIT redirect
-// app.get("/urls/:shortURL", (req, res) => {
-//   const shortURL = req.params.shortURL;
-//   console.log(shortURL);
-//   res.redirect(`/ urls / ${ shortURL }`);
-// });
-
-
-
-
-
-
 
 //----------------------------------display REGISTER page to the user
 app.get('/register', (req, res) => {
@@ -230,25 +219,6 @@ app.post("/logout", (req, res) => {
   console.log('Logout happenes')
   console.log(req.cookies['user_id'], ' -------user id in cookie');
 })
-
-
-
-// after login creation add to /urls hereto template VARS user: users[req.cookies['user_id']]; res.render('/register', templateVArs)
-//then change the _header . 
-
-// implement LOGOUT button
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 app.listen(PORT, () => {
