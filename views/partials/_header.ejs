@@ -14,11 +14,11 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav">
-        <a class="nav-item nav-link" href="/urls">My URLs</a>
-        <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
         <!-- LOGIN FORM  -->
         <% if(user_id){ %>
-        <h4>Logged in as <%=user_id.email%></h4>
+          <a class="nav-item nav-link" href="/urls">My URLs</a>
+          <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
+        <h4>Logged in as <%=email%></h4>
         <form action="/logout" method="POST">
             <button type="submit" class="btn btn-primary">LOGOUT</button>
           </div>

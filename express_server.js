@@ -107,6 +107,17 @@ const urlsOfUser = function (userID, shortURL, urlDatabase) {
   }
   return belongsToUser;
 }
+//loop through urlsDatabase urls to see if LongURL already exists for the user
+const longUrlOfUser = function (userID, longURL, urlDatabase) {
+  let urlExists = true;;
+  for (let objectValue of Object.values(urlDatabase)) {
+    if (objectValue.longURL === longURL && objectValue.userID === userID) {
+      return urlExists;
+    }
+  }
+  return false;
+}
+
 
 const findUserByUserId = userId => {
   //loop through the users
@@ -148,6 +159,18 @@ app.get('/urlDatabase', (req, res) => {
 });
 
 //----------------------------------MAIN PAGE
+
+app.get("/", (req, res) => {
+  const user_id = req.session.user_id;
+  console.log(user_id, 'user id')
+  if (user_id === undefined) {
+    res.redirect('/login');
+  } else {
+    res.redirect('/urls');
+  }
+});
+//----------------------------------MAIN PAGE
+
 app.get("/urls", (req, res) => {
   console.log(req.currentUser, 'current user')
   const user_id = req.session.user_id;
@@ -155,7 +178,7 @@ app.get("/urls", (req, res) => {
   const registeredUser = findUserByUserId(user_id);
   if (registeredUser) {
     const usersUrls = urlsForUser(user_id);
-    let templateVars = { user_id: users[user_id], urls: urlDatabase, usersUrls: usersUrls };
+    let templateVars = { user_id: users[user_id], urls: urlDatabase, usersUrls: usersUrls, email: users[user_id].email };
     res.render("urls_index", templateVars);
   } else {
     let templateVars = { user_id: users[user_id], urls: urlDatabase };
@@ -166,27 +189,30 @@ app.get("/urls", (req, res) => {
 //----------------------------------Display NEW PAGE form
 app.get("/urls/new", (req, res) => {
   const user_id = req.session.user_id;
-  let templateVars = { user_id: users[user_id] }
-  if (user_id !== undefined) {
+  let templateVars = { user_id: users[user_id], email: users[user_id].email }
+  console.log(user_id, 'user id in new')
+  if (user_id !== null) {
     res.render("urls_new", templateVars);
   } else {
-    res.render('urls_login_register', templateVars)
+    res.redirect('/login');
   }
 });
 
 //----------------------------------POST request to add urls, save and redirect
 app.post("/urls", (req, res) => {
   const user_id = req.session.user_id;
-  // console.log(user_id, 'user id of the one who posts ')
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
-  const urlExists = checkURLinDatabase(longURL);  //function that checks if email already in database
+  const urlExists = longUrlOfUser(user_id, longURL, urlDatabase);  //function that checks if email already in database
+
   if (!urlExists) {
     console.log(shortURL, 'short URL generated')
     urlDatabase[shortURL] = { longURL: longURL, userID: user_id };//save key-value to database
     res.redirect(`/urls/${shortURL}`)
   } else {
-    res.status(404).send("Sorry, the email you are trying to submit to submit exists");
+    let templateVars = { user_id: user_id, urls: urlDatabase, email: users[user_id].email }
+    res.render('emailExists', templateVars)
+    console.log(templateVars, ' for posting new existing url')
   }
   // console.log(urlDatabase, 'updated database url')
 });
@@ -203,10 +229,10 @@ app.get("/urls/:shortURL", (req, res) => {
   if (registeredUser) {
     if (urlBelongsToUser) {
       const usersUrls = urlsForUser(user_id);
-      let templateVars = { user_id: users[user_id], urls: urlDatabase, usersUrls: usersUrls, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
+      let templateVars = { user_id: users[user_id], urls: urlDatabase, usersUrls: usersUrls, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, email: users[user_id].email };
       res.render("urls_show", templateVars);
     } else {
-      let templateVars = { user_id: users[user_id], urls: urlDatabase };
+      let templateVars = { user_id: users[user_id], urls: urlDatabase, email: users[user_id].email };
       res.render('urlNotBelongs', templateVars)
     }
   } else {
@@ -229,6 +255,7 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 // ----------------------------------DELETE  
+
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
@@ -249,6 +276,7 @@ app.post("/urls/:shortURL/", (req, res) => {
 //----------------------------------display REGISTER page to the user
 app.get('/register', (req, res) => {
   const user_id = req.session.user_id;
+  if (user_id) res.redirect('/urls');
   let templateVars = { user_id: users[user_id] }
   res.render('register', templateVars);
 })
@@ -280,6 +308,7 @@ app.post('/register', (req, res) => {
 // -----------------------Display LOGIN PAGE
 app.get('/login', (req, res) => {
   const user_id = req.session.user_id;
+  if (user_id) res.redirect('/urls');
   let templateVars = { user_id: users[user_id] }
   res.render('login', templateVars);
 });
