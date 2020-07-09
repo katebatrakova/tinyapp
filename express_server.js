@@ -2,18 +2,20 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const app = express();
 const PORT = 8080;
-const cookieParser = require('cookie-parser')
-// const cookieSession = require('cookie-session')
+const cookieSession = require('cookie-session')
 const saltRounds = 10;
-
 
 //Set ejs as the view engine
 app.set("view engine", "ejs")
 
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', 'key2']
+}));
+
 //body-parser library converts the request body from a POST request Buffer into string
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser())
 //--------------------------------------------HELPER FUNCTIONS
 function generateRandomString() {
   return Math.random().toString(36).substr(6);
@@ -165,7 +167,7 @@ const checkUserIdUrlDatabase = ((user_id) => {
 
 //----------------------------------MAIN PAGE
 app.get("/urls", (req, res) => {
-  const user_id = req.cookies['user_id'];
+  const user_id = req.session.user_id;
   const userIdUrlDatabaseExists = checkUserIdUrlDatabase(user_id);
   const registeredUser = findUserByUserId(user_id);
   if (registeredUser) {
@@ -181,7 +183,7 @@ app.get("/urls", (req, res) => {
 
 //----------------------------------Display NEW PAGE
 app.get("/urls/new", (req, res) => {
-  const user_id = req.cookies['user_id'];
+  const user_id = req.session.user_id;
   let templateVars = { user_id: users[user_id] }
   if (user_id !== undefined) {
     res.render("urls_new", templateVars);
@@ -192,7 +194,7 @@ app.get("/urls/new", (req, res) => {
 
 //----------------------------------POST request to add urls, save and redirect
 app.post("/urls", (req, res) => {
-  const user_id = req.cookies['user_id'];
+  const user_id = req.session.user_id;
   // console.log(user_id, 'user id of the one who posts ')
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
@@ -211,7 +213,7 @@ app.post("/urls", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   ///urls/:id page should display a message or prompt if the user is not logged in
-  const user_id = req.cookies['user_id'];
+  const user_id = req.session.user_id;
   const shortURL = req.params.shortURL;
   const urlBelongsToUser = urlsOfUser(user_id, shortURL)
   console.log(urlBelongsToUser, ' belongs to user');
@@ -255,7 +257,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.post("/urls/:shortURL/", (req, res) => {
   const shortURL = req.params.shortURL;
   const updatedURL = req.body.longURL;
-  const user_id = req.cookies['user_id'];
+  const user_id = req.session.user_id;
   urlDatabase[shortURL] = { longURL: updatedURL, userID: user_id }
   console.log(urlDatabase)
   res.redirect('/urls');
@@ -264,7 +266,7 @@ app.post("/urls/:shortURL/", (req, res) => {
 
 //----------------------------------display REGISTER page to the user
 app.get('/register', (req, res) => {
-  const user_id = req.cookies['user_id'];
+  const user_id = req.session.user_id;
   let templateVars = { user_id: users[user_id] }
   res.render('register', templateVars);
 })
@@ -280,13 +282,13 @@ app.post('/register', (req, res) => {
   if (!userExists) {
     //add user to the users DB function
     const userID = addNewUSer(userId, email, password);
-    //set the user id in the coockie 
-    res.cookie('user_id', userID);
+    //set the user id in the cookie 
+    req.session.user_id = userID;
     console.log(userID, 'this is a userID')
     res.redirect('/urls');
   }
   else {
-    const user_id = req.cookies['user_id'];
+    const user_id = req.session.user_id;
     let templateVars = { user_id: users[user_id] }
     res.render('registrationFailed', templateVars)
   }
@@ -295,7 +297,7 @@ app.post('/register', (req, res) => {
 
 // -----------------------Display LOGIN PAGE
 app.get('/login', (req, res) => {
-  const user_id = req.cookies['user_id'];
+  const user_id = req.session.user_id;
   let templateVars = { user_id: users[user_id] }
   res.render('login', templateVars);
 });
@@ -306,15 +308,14 @@ app.post('/login', (req, res) => {
   //extract the user info from the request body
   const email = req.body.email;
   const password = req.body.password;
-  const user_id = req.cookies['user_id'];
-
+  const user_id = req.session.user_id;
   //authenticate user
   const userId = authenticateUser(email, password);
   if (userId) {
     //   // set the user ID in the coockie
-    res.cookie('user_id', userId);
+    req.session.user_id = userId;
     console.log(userId, ' ------ user ID');
-    console.log(req.cookies['user_id'], ' -------user id in cookie');
+    console.log(req.session.user_id, ' -------user id in cookie');
     res.redirect('/urls');
   } else {
     let templateVars = { user_id: users[user_id] }
@@ -322,12 +323,12 @@ app.post('/login', (req, res) => {
   }
 })
 
-//---------------------------------LOGOUT and delete cookie
+//---------------------------------LOGOUT 
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id')
+  req.session['user_id'] = null; //delete the cookie
   res.redirect('/urls');
   console.log('Logout happenes')
-  console.log(req.cookies['user_id'], ' -------user id in cookie');
+  console.log(req.session.user_id, ' -------user id in cookie');
 })
 
 app.listen(PORT, () => {
