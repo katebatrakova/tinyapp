@@ -1,10 +1,10 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
+const findUserByEmail = require("./helpers.js");
 const app = express();
 const PORT = 8080;
 const cookieSession = require('cookie-session')
 const saltRounds = 10;
-
 //Set ejs as the view engine
 app.set("view engine", "ejs")
 
@@ -16,51 +16,12 @@ app.use(cookieSession({
 //body-parser library converts the request body from a POST request Buffer into string
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
-//--------------------------------------------HELPER FUNCTIONS
-function generateRandomString() {
-  return Math.random().toString(36).substr(6);
-};
 
-const findUserByEmail = email => {
-  //loop through the users
-  for (let keyUserId in users) {
-    //if user match retrieve the user
-    if (users[keyUserId].email === email) {
-      return users[keyUserId];
-    }
-  }
-  return false;
-}
-
-
-
-
-const addNewUSer = (userId, email, password) => {
-  //create a new user object which is the value associated with the ID
-  const newUser = {
-    id: userId,
-    email,
-    password: bcrypt.hashSync(password, saltRounds)
-  }
-  //add new user object to usersDB
-  users[userId] = newUser;
-  //return userID
-  return userId;
-}
-
-
-const authenticateUser = (email, password) => {
-  //does the user with that email exist
-  const user = findUserByEmail(email);
-  //check the email and password match
-  if (user && bcrypt.compareSync(password, user.password) && user.email === email) {
-    return user.id;
-  } else {
-    return false;
-  }
-}
-
-
+// add app middleware  so you can access it anywhere 
+app.use((req, res, next) => {
+  req.currentUser = users[req.session['user_id']]
+  next();
+})
 
 // ----------------------------------DATABBASE OF URLs
 const urlDatabase = {
@@ -71,32 +32,6 @@ const urlDatabase = {
   'jiwj80r': { longURL: "https://codepen.io", userID: "wt33fjg" },
   'maext6': { longURL: "http://www.udey.com", userID: "wt33fjg" }
 };
-
-const urlsForUser = function (userID) {
-  const usersLongUrls = {};
-  for (let id in urlDatabase) {
-    if (urlDatabase[id].userID === userID) {
-      usersLongUrls[id] = (urlDatabase[id].longURL)
-    }
-  }
-  return usersLongUrls;
-}
-//loop through urlsDatabase urls to see if short id belong to userId
-
-const urlsOfUser = function (userID, shortURL) {
-  let belongsToUser = false;
-  for (let objectKey of Object.keys(urlDatabase)) {
-    if (objectKey === shortURL && urlDatabase[objectKey].userID === userID) {
-      belongsToUser = true;
-    }
-  }
-  return belongsToUser;
-}
-
-// console.log(urlsOfUser('kate', 'b3321'));
-
-
-
 
 // ----------------------------------DATABBASE OF USERS
 
@@ -123,29 +58,66 @@ const users = {
   }
 }
 
-// this end point is for checking the content of usersDb
-// remove when cleaning up the code
-app.get('/users', (req, res) => {
-  res.json(users);
-});
+//--------------------------------------------HELPER FUNCTIONS 
 
-app.get('/urlDatabase', (req, res) => {
-  res.json(urlDatabase);
-});
+function generateRandomString() {
+  return Math.random().toString(36).substr(6);
+};
+
+const addNewUSer = (userId, email, password, users) => {
+  //create a new user object which is the value associated with the ID
+  const newUser = {
+    id: userId,
+    email,
+    password: bcrypt.hashSync(password, saltRounds)
+  }
+  //add new user object to usersDB
+  users[userId] = newUser;
+  //return userID
+  return userId;
+}
+
+const urlsForUser = function (userID) {
+  const usersLongUrls = {};
+  for (let id in urlDatabase) {
+    if (urlDatabase[id].userID === userID) {
+      usersLongUrls[id] = (urlDatabase[id].longURL)
+    }
+  }
+  return usersLongUrls;
+}
+
+const authenticateUser = (email, password, users) => {
+  //does the user with that email exist
+  const user = findUserByEmail(email, users);
+  //check the email and password match
+  if (user && bcrypt.compareSync(password, user.password) && user.email === email) {
+    return user.id;
+  } else {
+    return false;
+  }
+}
+//loop through urlsDatabase urls to see if short id belongs to userId
+const urlsOfUser = function (userID, shortURL, urlDatabase) {
+  let belongsToUser = false;
+  for (let objectKey of Object.keys(urlDatabase)) {
+    if (objectKey === shortURL && urlDatabase[objectKey].userID === userID) {
+      belongsToUser = true;
+    }
+  }
+  return belongsToUser;
+}
 
 const findUserByUserId = userId => {
   //loop through the users
   for (let keyUserId in users) {
     // if user match retrieve the user
     if (users[keyUserId].id === userId) {
-      // console.log(users[keyUserId].id, userId, 'users match')
       return true;
     }
   }
   return false;
 }
-
-//--------------------------------------------HELPER FUNCTIONS 
 
 const checkURLinDatabase = ((longURL) => {
   for (let id in urlDatabase) {
@@ -164,9 +136,20 @@ const checkUserIdUrlDatabase = ((user_id) => {
   }
   return false;
 })
+//--------------------------------------------HELPER FUNCTIONS END
+// this end point is for checking the content of usersDb
+// remove when cleaning up the code
+app.get('/users', (req, res) => {
+  res.json(users);
+});
+
+app.get('/urlDatabase', (req, res) => {
+  res.json(urlDatabase);
+});
 
 //----------------------------------MAIN PAGE
 app.get("/urls", (req, res) => {
+  console.log(req.currentUser, 'current user')
   const user_id = req.session.user_id;
   const userIdUrlDatabaseExists = checkUserIdUrlDatabase(user_id);
   const registeredUser = findUserByUserId(user_id);
@@ -180,8 +163,7 @@ app.get("/urls", (req, res) => {
   }
 });
 
-
-//----------------------------------Display NEW PAGE
+//----------------------------------Display NEW PAGE form
 app.get("/urls/new", (req, res) => {
   const user_id = req.session.user_id;
   let templateVars = { user_id: users[user_id] }
@@ -215,7 +197,7 @@ app.get("/urls/:shortURL", (req, res) => {
   ///urls/:id page should display a message or prompt if the user is not logged in
   const user_id = req.session.user_id;
   const shortURL = req.params.shortURL;
-  const urlBelongsToUser = urlsOfUser(user_id, shortURL)
+  const urlBelongsToUser = urlsOfUser(user_id, shortURL, urlDatabase)
   console.log(urlBelongsToUser, ' belongs to user');
   const registeredUser = findUserByUserId(user_id);
   if (registeredUser) {
@@ -278,10 +260,10 @@ app.post('/register', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   // Check if user already exist via function 
-  const userExists = findUserByEmail(email);
+  const userExists = findUserByEmail(email, users);
   if (!userExists) {
     //add user to the users DB function
-    const userID = addNewUSer(userId, email, password);
+    const userID = addNewUSer(userId, email, password, users);
     //set the user id in the cookie 
     req.session.user_id = userID;
     console.log(userID, 'this is a userID')
@@ -309,10 +291,12 @@ app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const user_id = req.session.user_id;
+  console.log(user_id, 'cookie on login')
   //authenticate user
-  const userId = authenticateUser(email, password);
+  const userId = authenticateUser(email, password, users);
+  console.log(userId);
   if (userId) {
-    //   // set the user ID in the coockie
+    // set the user ID in the coockie
     req.session.user_id = userId;
     console.log(userId, ' ------ user ID');
     console.log(req.session.user_id, ' -------user id in cookie');
@@ -337,51 +321,8 @@ app.listen(PORT, () => {
 
 
 
-//  LECTURE SECURITY
-
-// '/users' endpoint - database 
 
 
-// added to password in users db//:bcrypt.hashSync(password,saltRounds) need to comment out
-
-
-
-
-//for login we need to change the m,echanism; we need plaint text
-
-
-// added bcrypt.compareSync(password, user.password) to authenticate function bcrypt.compareSync(password, user.password) === password
-
-
-// In addNEw USer function, if want to change users IDS to not random but incremental
-// change in function addNewUser = Object.keys(users).length +1
-
-
-// use filter function on users const users = Object.values(users)
-
-
-
-// to encrypt  cookies disable cookie parser
-// app.use(cookieSession({
-//   name: 'session',
-//   keys: ['key1', 'key2']
-// }))
-// in /urls add
-// set everywhere where set coockie
-// req.session['user_id'] = userId
-// disable req.cookie everywhere and where we assign userID const userId =req.session['user.id]
-// to clear cookie in logout res.session['user_id'] = null;
-// 
-
-//to secure traffic and ecrypt all the data httpS
-
-
-// add app middleware  so you can access it anywhere 
-
-// app.arguments((req, res, next) {
-//   req.current User = users[req.session['user_id']]
-//   next()
-// })
 
 
 
