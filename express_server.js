@@ -47,8 +47,6 @@ const addNewUSer = (userId, email, password) => {
 }
 
 
-
-
 const authenticateUser = (email, password) => {
   //does the user with that email exist
   const user = findUserByEmail(email);
