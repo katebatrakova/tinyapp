@@ -39,6 +39,9 @@ const addNewUSer = (userId, email, password) => {
   return userId;
 }
 
+
+
+
 const authenticateUser = (email, password) => {
   //does the user with that email exist
   const user = findUserByEmail(email);
@@ -55,9 +58,19 @@ const authenticateUser = (email, password) => {
 // ----------------------------------DATABBASE OF URLs
 const urlDatabase = {
   'b2xVn2': { longURL: "http://www.lighthouselabs.ca", userID: 'kate' },
+  'b3321': { longURL: "http://www.pumphouse.ca", userID: 'kate' },
   '9sm5xK': { longURL: "http://www.google.com", userID: 'mike' }
 };
 
+const urlsForUser = function (userID) {
+  const usersLongUrls = {};
+  for (let id in urlDatabase) {
+    if (urlDatabase[id].userID === userID) {
+      usersLongUrls[id] = (urlDatabase[id].longURL)
+    }
+  }
+  return usersLongUrls;
+}
 
 
 // ----------------------------------DATABBASE OF USERS
@@ -84,7 +97,8 @@ const users = {
     password: "ytr"
   }
 }
-//function  FIX THIS with the update object!!
+//--------------------------------------------HELPER FUNCTIONS 
+
 const checkURLinDatabase = ((longURL) => {
   for (let id in urlDatabase) {
     if (urlDatabase[id].longURL === longURL) {
@@ -93,11 +107,28 @@ const checkURLinDatabase = ((longURL) => {
   }
   return false;
 })
+
+const checkUserIdUrlDatabase = ((user_id) => {
+  for (let id in urlDatabase) {
+    if (urlDatabase[id].userID === user_id) {
+      return true;
+    };
+  }
+  return false;
+})
+
 //----------------------------------MAIN PAGE
 app.get("/urls", (req, res) => {
   const user_id = req.cookies['user_id'];
-  let templateVars = { user_id: users[user_id], urls: urlDatabase };
-  res.render("urls_index", templateVars);
+  const userIdUrlDatabaseExists = checkUserIdUrlDatabase(user_id);
+  if (userIdUrlDatabaseExists) {
+    const usersUrls = urlsForUser(user_id);
+    let templateVars = { user_id: users[user_id], urls: urlDatabase, usersUrls: usersUrls };
+    console.log(templateVars);
+    res.render("urls_index", templateVars);
+  } else {
+    res.send('Please, log in or register first')
+  }
 });
 
 
