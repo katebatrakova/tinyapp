@@ -16,9 +16,11 @@
       <div class="navbar-nav">
         <!-- LOGIN FORM  -->
         <% if(user_id){ %>
-          <a class="nav-item nav-link" href="/urls">My URLs</a>
-          <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <h4> <%=email%></h4>
+          <a class="nav-item nav-link" href="/urls"><button type="button" class="btn btn-success">My URLs</button></a>
+          <a class="nav-item nav-link" href="/urls/new"><button type="button" class="btn btn-success">Create New URL</button></a>
+       <div style="margin-right: 100px; margin-left:100px;margin-top:10px;" >
+          <h6> <%=email%></h6>
+        </div>
         <form action="/logout" method="POST">
             <button type="submit" class="btn btn-primary">LOGOUT</button>
           </div>
@@ -26,8 +28,8 @@
         <% } else {%> 
           <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
             <div class="navbar-nav">
-              <a class="nav-item nav-link" href="/login">Login</a>
-              <a class="nav-item nav-link" href="/register">Register</a>
+              <a class="nav-item nav-link" href="/login"><button type="button" class="btn btn-success">Login</button></a>
+              <a class="nav-item nav-link" href="/register"><button type="button" class="btn btn-success">Register</button></a>
           <%}%>
       </div>
     </div>
