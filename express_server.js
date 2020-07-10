@@ -3,27 +3,24 @@ const bcrypt = require("bcrypt");
 const findUserByEmail = require("./helpers.js");
 const app = express();
 const PORT = 8080;
-const cookieSession = require('cookie-session')
+const cookieSession = require('cookie-session');
 const saltRounds = 10;
 //Set ejs as the view engine
-app.set("view engine", "ejs")
+app.set("view engine", "ejs");
 
 app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2']
 }));
-
 //body-parser library converts the request body from a POST request Buffer into string
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
-
-// add app middleware  so you can access it anywhere 
+// add app middleware  so you can access it anywhere
 app.use((req, res, next) => {
-  req.currentUser = users[req.session['user_id']]
+  req.currentUser = users[req.session['user_id']];
   next();
-})
-
-// ----------------------------------DATABBASE OF URLs
+});
+// ----------------------------------------------------DATABBASE OF URLs
 const urlDatabase = {
   'b2xVn2': { longURL: "http://www.lighthouselabs.ca", userID: 'kate' },
   'b3321': { longURL: "http://www.pumphouse.ca", userID: 'kate' },
@@ -33,8 +30,7 @@ const urlDatabase = {
   'maext6': { longURL: "http://www.udey.com", userID: "wt33fjg" }
 };
 
-// ----------------------------------DATABBASE OF USERS
-
+// ----------------------------------------------------DATABBASE OF USERS
 const users = {
   "asdf": {
     id: "asdf",
@@ -56,13 +52,13 @@ const users = {
     email: "mykhailobatrakov@gmail.com",
     password: bcrypt.hashSync("ytr", saltRounds)
   }
-}
+};
 
-//--------------------------------------------HELPER FUNCTIONS 
+// ----------------------------------------------------HELPER FUNCTIONS
 
 function generateRandomString() {
   return Math.random().toString(36).substr(6);
-};
+}
 
 const addNewUSer = (userId, email, password, users) => {
   //create a new user object which is the value associated with the ID
@@ -70,25 +66,24 @@ const addNewUSer = (userId, email, password, users) => {
     id: userId,
     email,
     password: bcrypt.hashSync(password, saltRounds)
-  }
+  };
   //add new user object to usersDB
   users[userId] = newUser;
-  //return userID
   return userId;
-}
-
+};
+//retrieve urls assiciated with the specific user
 const urlsForUser = function (userID) {
   const usersLongUrls = {};
   for (let id in urlDatabase) {
     if (urlDatabase[id].userID === userID) {
-      usersLongUrls[id] = (urlDatabase[id].longURL)
+      usersLongUrls[id] = (urlDatabase[id].longURL);
     }
   }
   return usersLongUrls;
-}
+};
 
 const authenticateUser = (email, password, users) => {
-  //does the user with that email exist
+  //check if the user with that email exist
   const user = findUserByEmail(email, users);
   //check the email and password match
   if (user && bcrypt.compareSync(password, user.password) && user.email === email) {
@@ -96,8 +91,8 @@ const authenticateUser = (email, password, users) => {
   } else {
     return false;
   }
-}
-//loop through urlsDatabase urls to see if short id belongs to userId
+};
+//check if shortURL belongs to userId
 const urlsOfUser = function (userID, shortURL, urlDatabase) {
   let belongsToUser = false;
   for (let objectKey of Object.keys(urlDatabase)) {
@@ -106,18 +101,17 @@ const urlsOfUser = function (userID, shortURL, urlDatabase) {
     }
   }
   return belongsToUser;
-}
-//loop through urlsDatabase urls to see if LongURL already exists for the user
+};
+//check if longURL already exists for the user
 const longUrlOfUser = function (userID, longURL, urlDatabase) {
-  let urlExists = true;;
+  let urlExists = true;
   for (let objectValue of Object.values(urlDatabase)) {
     if (objectValue.longURL === longURL && objectValue.userID === userID) {
       return urlExists;
     }
   }
   return false;
-}
-
+};
 
 const findUserByUserId = userId => {
   //loop through the users
@@ -128,53 +122,24 @@ const findUserByUserId = userId => {
     }
   }
   return false;
-}
+};
 
-const checkURLinDatabase = ((longURL) => {
-  for (let id in urlDatabase) {
-    if (urlDatabase[id].longURL === longURL) {
-      return true;
-    };
-  }
-  return false;
-})
+// ----------------------------------------------------HELPER FUNCTIONS END
 
-const checkUserIdUrlDatabase = ((user_id) => {
-  for (let id in urlDatabase) {
-    if (urlDatabase[id].userID === user_id) {
-      return true;
-    };
-  }
-  return false;
-})
-//--------------------------------------------HELPER FUNCTIONS END
-// this end point is for checking the content of usersDb
-// remove when cleaning up the code
-app.get('/users', (req, res) => {
-  res.json(users);
-});
-
-app.get('/urlDatabase', (req, res) => {
-  res.json(urlDatabase);
-});
-
-//----------------------------------MAIN PAGE
+// ----------------------------------------------------MAIN PAGE
 
 app.get("/", (req, res) => {
   const user_id = req.session.user_id;
-  console.log(user_id, 'user id')
   if (user_id === undefined) {
     res.redirect('/login');
   } else {
     res.redirect('/urls');
   }
 });
-//----------------------------------MAIN PAGE
+// ----------------------------------------------------MAIN PAGE
 
 app.get("/urls", (req, res) => {
-  console.log(req.currentUser, 'current user')
   const user_id = req.session.user_id;
-  const userIdUrlDatabaseExists = checkUserIdUrlDatabase(user_id);
   const registeredUser = findUserByUserId(user_id);
   if (registeredUser) {
     const usersUrls = urlsForUser(user_id);
@@ -182,49 +147,45 @@ app.get("/urls", (req, res) => {
     res.render("urls_index", templateVars);
   } else {
     let templateVars = { user_id: users[user_id], urls: urlDatabase };
-    res.render('urls_login_register', templateVars)
+    res.render('urls_login_register', templateVars);
   }
 });
 
-//----------------------------------Display NEW PAGE form
+// ----------------------------------------------------Display NEW PAGE form
 app.get("/urls/new", (req, res) => {
   const user_id = req.session.user_id;
-  let templateVars = { user_id: users[user_id], email: users[user_id].email }
-  console.log(user_id, 'user id in new')
   if (user_id !== null) {
+    let templateVars = { user_id: users[user_id], email: users[user_id].email };
     res.render("urls_new", templateVars);
-  } else {
+  }
+  if (req.currentUser === undefined) {
     res.redirect('/login');
   }
 });
 
-//----------------------------------POST request to add urls, save and redirect
+// ----------------------------------------------------POST NEW urls, save and redirect
 app.post("/urls", (req, res) => {
   const user_id = req.session.user_id;
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
   const urlExists = longUrlOfUser(user_id, longURL, urlDatabase);  //function that checks if email already in database
-
   if (!urlExists) {
-    console.log(shortURL, 'short URL generated')
     urlDatabase[shortURL] = { longURL: longURL, userID: user_id };//save key-value to database
-    res.redirect(`/urls/${shortURL}`)
+    res.redirect(`/urls/${shortURL}`);
   } else {
-    let templateVars = { user_id: user_id, urls: urlDatabase, email: users[user_id].email }
-    res.render('emailExists', templateVars)
-    console.log(templateVars, ' for posting new existing url')
+    let templateVars = { user_id: user_id, urls: urlDatabase, email: users[user_id].email };
+    res.render('emailExists', templateVars);
   }
-  // console.log(urlDatabase, 'updated database url')
 });
 
-//----------------------------------Page urls/:shortURL
+// ----------------------------------------------------Page urls/:shortURL
 
 app.get("/urls/:shortURL", (req, res) => {
-  ///urls/:id page should display a message or prompt if the user is not logged in
   const user_id = req.session.user_id;
   const shortURL = req.params.shortURL;
-  const urlBelongsToUser = urlsOfUser(user_id, shortURL, urlDatabase)
-  console.log(urlBelongsToUser, ' belongs to user');
+  //check if shortURL belong to the user
+  const urlBelongsToUser = urlsOfUser(user_id, shortURL, urlDatabase);
+  // check if the user is registered
   const registeredUser = findUserByUserId(user_id);
   if (registeredUser) {
     if (urlBelongsToUser) {
@@ -233,28 +194,27 @@ app.get("/urls/:shortURL", (req, res) => {
       res.render("urls_show", templateVars);
     } else {
       let templateVars = { user_id: users[user_id], urls: urlDatabase, email: users[user_id].email };
-      res.render('urlNotBelongs', templateVars)
+      res.render('urlNotBelongs', templateVars);
     }
   } else {
+    //prompt to login or register
     let templateVars = { user_id: users[user_id], urls: urlDatabase };
-    res.render('urls_login_register', templateVars)
+    res.render('urls_login_register', templateVars);
   }
 });
 
 
-// //----------------------------------redirect to LongURL 
+// ----------------------------------------------------redirect to LongURL
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   if (urlDatabase[shortURL] !== undefined) {
     res.redirect(urlDatabase[shortURL].longURL);
-    console.log('redirecting to....', urlDatabase[shortURL].longURL);
   } else {
     res.status(404).send("Sorry, the website is not found");
   }
-
 });
 
-// ----------------------------------DELETE  
+// ----------------------------------------------------DELETE
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
@@ -262,87 +222,75 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect('/urls');
 });
 
-// ----------------------------------EDIT in ShortURL
+// ----------------------------------------------------EDIT in ShortURL
 app.post("/urls/:shortURL/", (req, res) => {
   const shortURL = req.params.shortURL;
   const updatedURL = req.body.longURL;
   const user_id = req.session.user_id;
-  urlDatabase[shortURL] = { longURL: updatedURL, userID: user_id }
-  console.log(urlDatabase)
+  urlDatabase[shortURL] = { longURL: updatedURL, userID: user_id };
   res.redirect('/urls');
-
 });
 
-//----------------------------------display REGISTER page to the user
+// ----------------------------------------------------display REGISTER form
 app.get('/register', (req, res) => {
   const user_id = req.session.user_id;
-  if (user_id) res.redirect('/urls');
-  let templateVars = { user_id: users[user_id] }
+  if (user_id) res.redirect('/urls'); //redirect users who are logged in
+  let templateVars = { user_id: users[user_id] };
   res.render('register', templateVars);
-})
+});
 
-// ----------------------------------catch the submit btn of the REGISTER form, set COOCKIE
+// ---------------------------------------------------- REGISTER form SUBMIT
 app.post('/register', (req, res) => {
   //extract user info from the form
   const userId = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
-  // Check if user already exist via function 
+  // Check if user already exist
   const userExists = findUserByEmail(email, users);
   if (!userExists) {
     //add user to the users DB function
     const userID = addNewUSer(userId, email, password, users);
-    //set the user id in the cookie 
+    //set and encrypt the user id in the cookie
     req.session.user_id = userID;
-    console.log(userID, 'this is a userID')
     res.redirect('/urls');
-  }
-  else {
+  } else { // in case the user exists in the system
     const user_id = req.session.user_id;
-    let templateVars = { user_id: users[user_id] }
-    res.render('registrationFailed', templateVars)
+    let templateVars = { user_id: users[user_id] };
+    res.render('registrationFailed', templateVars);
   }
-  console.log(users, 'updates users object database');
-})
+});
 
-// -----------------------Display LOGIN PAGE
+// ----------------------------------------------------Display LOGIN PAGE
 app.get('/login', (req, res) => {
   const user_id = req.session.user_id;
   if (user_id) res.redirect('/urls');
-  let templateVars = { user_id: users[user_id] }
+  let templateVars = { user_id: users[user_id] };
   res.render('login', templateVars);
 });
 
-// ------------------------- LOGIN the user 
-
+// ----------------------------------------------------LOGIN form submit
 app.post('/login', (req, res) => {
   //extract the user info from the request body
   const email = req.body.email;
   const password = req.body.password;
   const user_id = req.session.user_id;
-  console.log(user_id, 'cookie on login')
   //authenticate user
   const userId = authenticateUser(email, password, users);
-  console.log(userId);
   if (userId) {
-    // set the user ID in the coockie
+    // set and encrypt the user ID in the coockie
     req.session.user_id = userId;
-    console.log(userId, ' ------ user ID');
-    console.log(req.session.user_id, ' -------user id in cookie');
     res.redirect('/urls');
   } else {
-    let templateVars = { user_id: users[user_id] }
+    let templateVars = { user_id: users[user_id] };
     res.render('authenticationFailed', templateVars);
   }
-})
+});
 
-//---------------------------------LOGOUT 
+// ----------------------------------------------------LOGOUT
 app.post("/logout", (req, res) => {
   req.session['user_id'] = null; //delete the cookie
   res.redirect('/urls');
-  console.log('Logout happenes')
-  console.log(req.session.user_id, ' -------user id in cookie');
-})
+});
 
 app.listen(PORT, () => {
   console.log(`TinyAPP listening on port ${PORT}!`);

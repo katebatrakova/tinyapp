@@ -1,4 +1,3 @@
-
 const findUserByEmail = (email, users) => {
   //loop through the users
   for (let keyUserId in users) {

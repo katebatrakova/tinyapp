@@ -12,13 +12,13 @@
     >
       <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+    <div class="collapse navbar-collapse" >
       <div class="navbar-nav">
         <!-- LOGIN FORM  -->
         <% if(user_id){ %>
           <a class="nav-item nav-link" href="/urls">My URLs</a>
           <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <h4>Logged in as <%=email%></h4>
+        <h4> <%=email%></h4>
         <form action="/logout" method="POST">
             <button type="submit" class="btn btn-primary">LOGOUT</button>
           </div>
