@@ -12,15 +12,20 @@ app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2']
 }));
+
 //body-parser library converts the request body from a POST request Buffer into string
 const bodyParser = require("body-parser");
+
 app.use(bodyParser.urlencoded({ extended: true }));
-// add app middleware  so you can access it anywhere
+
+//Middleware creates a session cookie, a unique id, to identify the http client
 app.use((req, res, next) => {
   req.currentUser = users[req.session['user_id']];
   next();
 });
-// ----------------------------------------------------DATABBASE OF URLs
+
+// ----------------------------------------------------DATABBASE OF URL
+
 const urlDatabase = {
   'b2xVn2': { longURL: "http://www.lighthouselabs.ca", userID: 'kate' },
   'b3321': { longURL: "http://www.pumphouse.ca", userID: 'kate' },
@@ -32,28 +37,46 @@ const urlDatabase = {
 
 // ----------------------------------------------------DATABBASE OF USERS
 const users = {
-  "asdf": {
-    id: "asdf",
+  "12": {
+    id: "12",
     email: "odin@example.com",
     password: bcrypt.hashSync("first", saltRounds)
   },
-  "qwerty": {
-    id: "qwerty",
+  "12we": {
+    id: "12we",
     email: "dva@example.com",
     password: bcrypt.hashSync("second", saltRounds)
   },
-  "kate": {
-    id: "kate",
+  "kk90l": {
+    id: "kk90l",
     email: "katerynabatrakova@gmail.com",
     password: bcrypt.hashSync("rty", saltRounds)
   },
-  "mike": {
-    id: "mike",
+  "mm121": {
+    id: "mm121",
     email: "mykhailobatrakov@gmail.com",
     password: bcrypt.hashSync("ytr", saltRounds)
+  },
+  "klkl": {
+    id: "klkl",
+    email: "kate@mail.com",
+    password: bcrypt.hashSync("111", saltRounds)
+  },
+  "brbrbr": {
+    id: "brbrbr",
+    email: "brad@mail.com",
+    password: bcrypt.hashSync("222", saltRounds)
   }
 };
 
+// this end point is for checking the content of usersDb
+// remove when cleaning up the code
+app.get('/users', (req, res) => {
+  res.json(users);
+});
+app.get('/urldatabase', (req, res) => {
+  res.json(urlDatabase);
+});
 // ----------------------------------------------------HELPER FUNCTIONS
 
 function generateRandomString() {
@@ -71,7 +94,9 @@ const addNewUSer = (userId, email, password, users) => {
   users[userId] = newUser;
   return userId;
 };
+
 //retrieve urls assiciated with the specific user
+
 const urlsForUser = function (userID) {
   const usersLongUrls = {};
   for (let id in urlDatabase) {
@@ -92,8 +117,10 @@ const authenticateUser = (email, password, users) => {
     return false;
   }
 };
+
 //check if shortURL belongs to userId
-const urlsOfUser = function (userID, shortURL, urlDatabase) {
+
+const urlsOfUser = function (userID, shortURL) {
   let belongsToUser = false;
   for (let objectKey of Object.keys(urlDatabase)) {
     if (objectKey === shortURL && urlDatabase[objectKey].userID === userID) {
@@ -102,8 +129,10 @@ const urlsOfUser = function (userID, shortURL, urlDatabase) {
   }
   return belongsToUser;
 };
+
 //check if longURL already exists for the user
-const longUrlOfUser = function (userID, longURL, urlDatabase) {
+
+const longUrlOfUser = function (userID, longURL) {
   let urlExists = true;
   for (let objectValue of Object.values(urlDatabase)) {
     if (objectValue.longURL === longURL && objectValue.userID === userID) {
@@ -123,9 +152,6 @@ const findUserByUserId = userId => {
   }
   return false;
 };
-
-// ----------------------------------------------------HELPER FUNCTIONS END
-
 // ----------------------------------------------------MAIN PAGE
 
 app.get("/", (req, res) => {
@@ -136,7 +162,6 @@ app.get("/", (req, res) => {
     res.redirect('/urls');
   }
 });
-// ----------------------------------------------------MAIN PAGE
 
 app.get("/urls", (req, res) => {
   const user_id = req.session.user_id;
@@ -152,6 +177,7 @@ app.get("/urls", (req, res) => {
 });
 
 // ----------------------------------------------------Display NEW PAGE form
+
 app.get("/urls/new", (req, res) => {
   const user_id = req.session.user_id;
   if (user_id !== null) {
@@ -163,7 +189,8 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
-// ----------------------------------------------------POST NEW urls, save and redirect
+// ----------------------------------------------------POST NEW url, save and redirect
+
 app.post("/urls", (req, res) => {
   const user_id = req.session.user_id;
   const shortURL = generateRandomString();
@@ -205,6 +232,7 @@ app.get("/urls/:shortURL", (req, res) => {
 
 
 // ----------------------------------------------------redirect to LongURL
+
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   if (urlDatabase[shortURL] !== undefined) {
@@ -218,20 +246,56 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
-  delete urlDatabase[shortURL];
+  const user_id = req.session.user_id;
+  // check if shortURL belong to the user
+  const urlBelongsToUser = urlsOfUser(user_id, shortURL);
+  // check if the user is registered
+  const registeredUser = findUserByUserId(user_id);
+  if (registeredUser) {
+    if (urlBelongsToUser) {
+      delete urlDatabase[shortURL];
+    } else {
+      let templateVars = { user_id: users[user_id], urls: urlDatabase, email: users[user_id].email };
+      res.render('urlNotBelongs', templateVars);
+    }
+  } else {
+    //prompt to login or register
+    let templateVars = { user_id: users[user_id], urls: urlDatabase };
+    res.render('urls_login_register', templateVars);
+  }
+
   res.redirect('/urls');
 });
 
 // ----------------------------------------------------EDIT in ShortURL
+
 app.post("/urls/:shortURL/", (req, res) => {
   const shortURL = req.params.shortURL;
   const updatedURL = req.body.longURL;
   const user_id = req.session.user_id;
-  urlDatabase[shortURL] = { longURL: updatedURL, userID: user_id };
+  //check if shortURL belongs to the user
+  const urlBelongsToUser = urlsOfUser(user_id, shortURL);
+  console.log(urlBelongsToUser, 'short url belongs to user?')
+  // check if the user is registered 
+  const registeredUser = findUserByUserId(user_id);
+  console.log(registeredUser, 'user is registeredUser?')
+  if (registeredUser) {
+    if (urlBelongsToUser) {
+      urlDatabase[shortURL] = { longURL: updatedURL, userID: user_id };
+    } else {
+      let templateVars = { user_id: users[user_id], urls: urlDatabase, email: users[user_id].email };
+      res.render('urlNotBelongs', templateVars);
+    }
+  } else {
+    //prompt to login or register
+    let templateVars = { user_id: users[user_id], urls: urlDatabase };
+    res.render('urls_login_register', templateVars);
+  }
   res.redirect('/urls');
 });
 
 // ----------------------------------------------------display REGISTER form
+
 app.get('/register', (req, res) => {
   const user_id = req.session.user_id;
   if (user_id) res.redirect('/urls'); //redirect users who are logged in
@@ -240,6 +304,7 @@ app.get('/register', (req, res) => {
 });
 
 // ---------------------------------------------------- REGISTER form SUBMIT
+
 app.post('/register', (req, res) => {
   //extract user info from the form
   const userId = generateRandomString();
@@ -261,6 +326,7 @@ app.post('/register', (req, res) => {
 });
 
 // ----------------------------------------------------Display LOGIN PAGE
+
 app.get('/login', (req, res) => {
   const user_id = req.session.user_id;
   if (user_id) res.redirect('/urls');
@@ -269,6 +335,7 @@ app.get('/login', (req, res) => {
 });
 
 // ----------------------------------------------------LOGIN form submit
+
 app.post('/login', (req, res) => {
   //extract the user info from the request body
   const email = req.body.email;
@@ -287,6 +354,7 @@ app.post('/login', (req, res) => {
 });
 
 // ----------------------------------------------------LOGOUT
+
 app.post("/logout", (req, res) => {
   req.session['user_id'] = null; //delete the cookie
   res.redirect('/urls');
